@@ -29,7 +29,7 @@ namespace {
 
 /// Version number. If Version is left empty, then compile date in the format
 /// DD-MM-YY and show in engine_info.
-static const string Version = "v5.3 RC3";
+static const string Version = "v5.3 ";
 
 /// Debug counters
 int64_t hits[2], means[2];
