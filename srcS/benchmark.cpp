@@ -102,7 +102,7 @@ void benchmark(const Position& current, istream& is) {
 
   Options["Hash"]    = ttSize;
   Options["Threads"] = threads;
-  Search::reset();
+  TT.clear();
 
   if (limitType == "time")
       limits.movetime = stoi(limit); // movetime is in ms
