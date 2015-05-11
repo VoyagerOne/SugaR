@@ -29,7 +29,7 @@ namespace {
 
 /// Version number. If Version is left empty, then compile date in the format
 /// DD-MM-YY and show in engine_info.
-static const string Version = "v5.3 ";
+const string Version = "";
 
 /// Debug counters
 int64_t hits[2], means[2];
@@ -113,10 +113,11 @@ const string engine_info(bool to_uci) {
       ss << setw(2) << day << setw(2) << (1 + months.find(month) / 4) << year.substr(2);
   }
 
-  ss << (Is64Bit ? " 64" : "")
+  ss << (Is64Bit ? " 64" : " 32")
      << (HasPext ? " BMI2" : ( UseAVX ? " AVX" : (HasPopCnt ? " POPCNT" : "")))
      << (to_uci  ? "\nid author ": " by ")
      << "Marco Zerbinati";
+
 
   return ss.str();
 }
