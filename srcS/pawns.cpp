@@ -60,7 +60,7 @@ namespace {
   const Score UnsupportedPawnPenalty = S(20, 10);
 
   // En Passant bonus
-  Score EnPassantBonus = S(11, 6);
+  Score EnPassantBonus = S(7, 5);
 };
 
   TUNE(EnPassantBonus);
