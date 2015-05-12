@@ -39,6 +39,7 @@ int main(int argc, char* argv[]) {
   UCI::init(Options);
   TT.resize(Options["Hash"]);
   Tune::init();
+  PSQT::init();
   Bitboards::init();
   Position::init();
   Bitbases::init();

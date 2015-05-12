@@ -25,7 +25,6 @@
 #include "misc.h"
 #include "movegen.h"
 #include "position.h"
-#include "psqtab.h"
 #include "thread.h"
 #include "tt.h"
 #include "uci.h"
@@ -50,7 +49,7 @@ Key Position::exclusion_key() const { return st->key ^ Zobrist::exclusion; }
 namespace {
 
 const string PieceToChar(" PNBRQK  pnbrqk");
-Score psq[COLOR_NB][PIECE_TYPE_NB][SQUARE_NB];
+
 
 // min_attacker() is a helper function used by see() to locate the least
 // valuable attacker for the side to move, remove the attacker we just found
@@ -94,12 +93,12 @@ CheckInfo::CheckInfo(const Position& pos) {
   pinned = pos.pinned_pieces(pos.side_to_move());
   dcCandidates = pos.discovered_check_candidates();
 
-  checkSq[PAWN]   = pos.attacks_from<PAWN>(ksq, them);
-  checkSq[KNIGHT] = pos.attacks_from<KNIGHT>(ksq);
-  checkSq[BISHOP] = pos.attacks_from<BISHOP>(ksq);
-  checkSq[ROOK]   = pos.attacks_from<ROOK>(ksq);
-  checkSq[QUEEN]  = checkSq[BISHOP] | checkSq[ROOK];
-  checkSq[KING]   = 0;
+  checkSquares[PAWN]   = pos.attacks_from<PAWN>(ksq, them);
+  checkSquares[KNIGHT] = pos.attacks_from<KNIGHT>(ksq);
+  checkSquares[BISHOP] = pos.attacks_from<BISHOP>(ksq);
+  checkSquares[ROOK]   = pos.attacks_from<ROOK>(ksq);
+  checkSquares[QUEEN]  = checkSquares[BISHOP] | checkSquares[ROOK];
+  checkSquares[KING]   = 0;
 }
 
 
@@ -128,10 +127,10 @@ std::ostream& operator<<(std::ostream& os, const Position& pos) {
 
 
 /// Position::init() initializes at startup the various arrays used to compute
-/// hash keys and the piece square tables. The latter is a two-step operation:
-/// Firstly, the white halves of the tables are copied from PSQT[] tables.
-/// Secondly, the black halves of the tables are initialized by flipping and
-/// changing the sign of the white scores.
+/// hash keys.
+
+
+
 
 void Position::init() {
 
@@ -159,19 +158,19 @@ void Position::init() {
   Zobrist::side = rng.rand<Key>();
   Zobrist::exclusion  = rng.rand<Key>();
 
-  for (PieceType pt = PAWN; pt <= KING; ++pt)
-  {
-      PieceValue[MG][make_piece(BLACK, pt)] = PieceValue[MG][pt];
-      PieceValue[EG][make_piece(BLACK, pt)] = PieceValue[EG][pt];
 
-      Score v = make_score(PieceValue[MG][pt], PieceValue[EG][pt]);
 
-      for (Square s = SQ_A1; s <= SQ_H8; ++s)
-      {
-         psq[WHITE][pt][ s] =  (v + PSQT[pt][s]);
-         psq[BLACK][pt][~s] = -(v + PSQT[pt][s]);
-      }
-  }
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
@@ -371,7 +370,7 @@ void Position::set_state(StateInfo* si) const {
       Square s = pop_lsb(&b);
       Piece pc = piece_on(s);
       si->key ^= Zobrist::psq[color_of(pc)][type_of(pc)][s];
-      si->psq += psq[color_of(pc)][type_of(pc)][s];
+      si->psq += PSQT::psq[color_of(pc)][type_of(pc)][s];
   }
 
   if (si->epSquare != SQ_NONE)
@@ -633,7 +632,7 @@ bool Position::gives_check(Move m, const CheckInfo& ci) const {
   Square to = to_sq(m);
 
   // Is there a direct check?
-  if (ci.checkSq[type_of(piece_on(from))] & to)
+  if (ci.checkSquares[type_of(piece_on(from))] & to)
       return true;
 
   // Is there a discovered check?
@@ -723,7 +722,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       do_castling<true>(us, from, to, rfrom, rto);
 
       captured = NO_PIECE_TYPE;
-      st->psq += psq[us][ROOK][rto] - psq[us][ROOK][rfrom];
+      st->psq += PSQT::psq[us][ROOK][rto] - PSQT::psq[us][ROOK][rfrom];
       k ^= Zobrist::psq[us][ROOK][rfrom] ^ Zobrist::psq[us][ROOK][rto];
   }
 
@@ -762,7 +761,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       prefetch(thisThread->materialTable[st->materialKey]);
 
       // Update incremental scores
-      st->psq -= psq[them][captured][capsq];
+      st->psq -= PSQT::psq[them][captured][capsq];
 
       // Reset rule 50 counter
       st->rule50 = 0;
@@ -818,7 +817,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
                             ^ Zobrist::psq[us][PAWN][pieceCount[us][PAWN]];
 
           // Update incremental score
-          st->psq += psq[us][promotion][to] - psq[us][PAWN][to];
+          st->psq += PSQT::psq[us][promotion][to] - PSQT::psq[us][PAWN][to];
 
           // Update material
           st->nonPawnMaterial[us] += PieceValue[MG][promotion];
@@ -833,7 +832,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
   }
 
   // Update incremental scores
-  st->psq += psq[us][pt][to] - psq[us][pt][from];
+  st->psq += PSQT::psq[us][pt][to] - PSQT::psq[us][pt][from];
 
   // Set capture piece
   st->capturedType = captured;
