@@ -1,0 +1,26 @@
+SugaR v5.3 RC1  32-64 Bit 
+
+
+History parameters tuning UCI options
+
+Mg=MiddleGame
+Eg=EndGame
+
+
+
+Tuning Pieces Value Eg\Mg
+
+MidgameLimit
+EndgameLimit
+
+
+Split MiddleGame and endgame scale factor for positive and negative 
+
+BestMoveChanges
+Increment = bmcPars[0]/100.0;
+Decay     = bmcPars[1]/100.0;
+
+unstablePvFactor
+fOffset  = upfPars[0]/100.0;
+upfScaling = upfPars[1]/100.0;
+__________________________________
