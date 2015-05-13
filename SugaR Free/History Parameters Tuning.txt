@@ -16,11 +16,6 @@ EndgameLimit
 
 Split MiddleGame and endgame scale factor for positive and negative 
 
-BestMoveChanges
-Increment = bmcPars[0]/100.0;
-Decay     = bmcPars[1]/100.0;
+Enpassantbonus Mg\Eg
 
-unstablePvFactor
-fOffset  = upfPars[0]/100.0;
-upfScaling = upfPars[1]/100.0;
 __________________________________
