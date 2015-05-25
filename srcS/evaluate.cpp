@@ -769,7 +769,8 @@ namespace {
             - evaluate_passed_pawns<BLACK, Trace>(pos, ei);
 
     // If both sides have only pawns, score for potential unstoppable pawns
-    if (!pos.non_pawn_material(WHITE) && !pos.non_pawn_material(BLACK))
+    if (   pos.non_pawn_material(WHITE) <= KnightValueMg
+        && pos.non_pawn_material(BLACK) <= KnightValueMg)
     {
         Bitboard b;
         if ((b = ei.pi->passed_pawns(WHITE)) != 0)
