@@ -29,10 +29,10 @@ namespace {
   #define V Value
   #define S(mg, eg) make_score(mg, eg)
 
-  // Doubled pawn penalty by file
-  const Score Doubled[FILE_NB] = {
-    S(13, 43), S(20, 48), S(23, 48), S(23, 48),
-    S(23, 48), S(23, 48), S(20, 48), S(13, 43) };
+  // Doubled pawn penalty
+  const Score Doubled = S(15, 33);
+
+
 
   // Isolated pawn penalty by opposed flag and file
   const Score Isolated[2][FILE_NB] = {
@@ -201,7 +201,8 @@ namespace {
             score += Connected[opposed][!!phalanx][more_than_one(supported)][relative_rank(Us, s)];
 
         if (doubled)
-            score -= Doubled[f] / distance<Rank>(s, frontmost_sq(Us, doubled));
+
+            score -= Doubled;
 
         if (lever)
             score += Lever[relative_rank(Us, s)];
