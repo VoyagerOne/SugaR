@@ -410,8 +410,8 @@ namespace {
                      + 25 * popcount<Max15>(undefended)
                      + 11 * (ei.pinnedPieces[Us] != 0)
                      - mg_value(score) / 8
+                     - eg_value(score) / 10
                      - !pos.count<QUEEN>(Them) * 60;
-
         // Analyse the enemy's safe queen contact checks. Firstly, find the
         // undefended squares around the king reachable by the enemy queen...
         b = undefended & ei.attackedBy[Them][QUEEN] & ~pos.pieces(Them);
