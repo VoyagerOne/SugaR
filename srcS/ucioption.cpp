@@ -113,7 +113,7 @@ void init(OptionsMap& o) {
   o["BishopValueMg"]         << Option(836, 0, 2000, on_eval);
   o["BishopValueEg"]         << Option(857, 0, 2000, on_eval);
   o["RookValueMg"]           << Option(1270, 0, 3000, on_eval);
-  o["RookValueEg"]           << Option(1278, 0, 3000, on_eval);
+  o["RookValueEg"]           << Option(1281, 0, 3000, on_eval);
   o["QueenValueMg"]          << Option(2521, 0, 5000, on_eval);
   o["QueenValueEg"]          << Option(2558, 0, 5000, on_eval);
   o["MidgameLimit"]          << Option(15581, 8000, 25000, on_eval);
