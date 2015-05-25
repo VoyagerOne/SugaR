@@ -73,6 +73,8 @@ namespace {
 
   const Score CenterBind = S(16, 0);
 
+  const Score SpaceOnBothWings = S(50, 0);
+
   // Weakness of our pawn shelter in front of the king by [distance from edge][rank]
   const Value ShelterWeakness[][RANK_NB] = {
   { V( 99), V(20), V(26), V(54), V(85), V( 92), V(108) },
@@ -113,7 +115,7 @@ namespace {
     const Square Up    = (Us == WHITE ? DELTA_N  : DELTA_S);
     const Square Right = (Us == WHITE ? DELTA_NE : DELTA_SW);
     const Square Left  = (Us == WHITE ? DELTA_NW : DELTA_SE);
-
+    const Bitboard TRank5 = (Us == WHITE ? Rank5BB : Rank4BB);
     Bitboard b, neighbours, doubled, supported, phalanx;
     Square s;
     bool passed, isolated, opposed, backward, lever, connected;
@@ -214,6 +216,15 @@ namespace {
     // Center binds: Two pawns controlling the same central square
     b = shift_bb<Right>(ourPawns) & shift_bb<Left>(ourPawns) & CenterBindMask[Us];
     score += popcount<Max15>(b) * CenterBind;
+
+    // Space advantage on both wings: add bonus for each pawn pair on 5th rank with distance 3 like a5/d5
+    b = ourPawns & TRank5;
+    if(more_than_one(b))
+    {
+        b = shift_bb<DELTA_E>(shift_bb<DELTA_E>(b)) & shift_bb<DELTA_W>(b);
+        if(b)
+            score += SpaceOnBothWings * popcount<Max15>(b);
+    }
 
     return score;
   }
