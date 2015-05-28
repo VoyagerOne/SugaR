@@ -38,7 +38,7 @@
 template<typename T>
 struct Stats {
 
-  static const Value Max = Value(250);
+  static const Value Max = Value(175);
 
   const T* operator[](Piece pc) const { return table[pc]; }
   T* operator[](Piece pc) { return table[pc]; }
