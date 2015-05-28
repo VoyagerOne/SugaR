@@ -354,10 +354,6 @@ namespace {
 
     TT.new_search();
 
-
-
-
-
     size_t multiPV = Options["MultiPV"];
     Skill skill(Options["Skill Level"]);
 
@@ -538,9 +534,9 @@ namespace {
     Move ttMove, move, excludedMove, bestMove;
     Depth extension, newDepth, predictedDepth;
     Value bestValue, value, ttValue, eval, nullValue, futilityValue;
-    bool ttHit, inCheck, givesCheck, singularExtensionNode, improving;
+    bool ttHit, inCheck, givesCheck, singularExtensionNode;
     bool captureOrPromotion, dangerous, doFullDepthSearch;
-    int moveCount, quietCount;
+    int improving, moveCount, quietCount;
 
     // Step 1. Initialize node
     Thread* thisThread = pos.this_thread();
@@ -678,17 +674,6 @@ namespace {
     if (ss->skipEarlyPruning)
         goto moves_loop;
 
-
-
-
-
-
-
-
-
-
-
-
     // Step 6. Razoring (skipped when in check)
     if (   !PvNode
         &&  depth < 4 * ONE_PLY
@@ -806,9 +791,10 @@ moves_loop: // When in check and at SpNode search starts from here
     MovePicker mp(pos, ttMove, depth, History, CounterMovesHistory, countermove, ss);
     CheckInfo ci(pos);
     value = bestValue; // Workaround a bogus 'uninitialized' warning under gcc
-    improving =   ss->staticEval >= (ss-2)->staticEval
-               || ss->staticEval == VALUE_NONE
-               ||(ss-2)->staticEval == VALUE_NONE;
+    improving =  std::min( std::max( int( ss->staticEval - (ss-2)->staticEval )  
+               *(ss->staticEval != VALUE_NONE) * ((ss-2)->staticEval != VALUE_NONE), 
+
+               -100) + 100, 200)/20;
 
     singularExtensionNode =   !RootNode
                            && !SpNode
@@ -912,7 +898,7 @@ moves_loop: // When in check and at SpNode search starts from here
       {
           // Move count based pruning
           if (   depth < 16 * ONE_PLY
-              && moveCount >= FutilityMoveCounts[improving][depth])
+              && moveCount >= FutilityMoveCounts[improving > 4][depth] - (improving < 3))
           {
               if (SpNode)
                   splitPoint->spinlock.acquire();
@@ -920,7 +906,7 @@ moves_loop: // When in check and at SpNode search starts from here
               continue;
           }
 
-          predictedDepth = newDepth - reduction<PvNode>(improving, depth, moveCount);
+          predictedDepth = newDepth - reduction<PvNode>(improving > 4, depth, moveCount);
 
           // Futility pruning: parent node
           if (predictedDepth < 7 * ONE_PLY)
@@ -975,7 +961,7 @@ moves_loop: // When in check and at SpNode search starts from here
           &&  move != ss->killers[0]
           &&  move != ss->killers[1])
       {
-          ss->reduction = reduction<PvNode>(improving, depth, moveCount);
+          ss->reduction = reduction<PvNode>(improving > 4, depth, moveCount);
 
           if (   (!PvNode && cutNode)
               || (   History[pos.piece_on(to_sq(move))][to_sq(move)] < VALUE_ZERO
