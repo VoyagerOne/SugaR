@@ -42,7 +42,7 @@ namespace {
     S(40, 35), S(40, 35), S(36, 35), S(25, 30) } };
 
   // Backward pawn penalty by opposed flag
-  const Score Backward[2] = { S(67, 56), S(49, 40) };
+  const Score Backward[2] = { S(67, 47), S(49, 29) };
 
 
 
