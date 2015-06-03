@@ -101,7 +101,7 @@ const string engine_info(bool to_uci) {
   string month, day, year;
   stringstream ss, date(__DATE__); // From compiler, format is "Sep 21 2008"
 
-  ss << " " << Version << setfill('0');
+  ss << "SugaR " << Version << setfill('0');
 
   if (Version.empty())
   {
