@@ -156,7 +156,6 @@ namespace {
   const Score Hanging            = S(31, 26);
   const Score PawnAttackThreat   = S(20, 20);
         Score PawnSafePush       = S( 5,  5);
-        Score TacticalLever      = S( 3,  3);
 
   // Penalty for a bishop on a1/h1 (a8/h8 for black) which is trapped by
   // a friendly pawn on b2/g2 (b7/g7 for black). This can obviously only
@@ -164,7 +163,6 @@ namespace {
   const Score TrappedBishopA1H1 = S(50, 50);
   
   TUNE(PawnSafePush);
-  TUNE(TacticalLever);
 
   #undef S
   #undef V
@@ -383,8 +381,7 @@ namespace {
         {
             // ...and then remove squares not supported by another enemy piece
             b &=  ei.attackedBy[Them][PAWN]   | ei.attackedBy[Them][KNIGHT]
-                | ei.attackedBy[Them][BISHOP] | ei.attackedBy[Them][ROOK] | 
-                  ei.attackedBy[Them][KING];
+                | ei.attackedBy[Them][BISHOP] | ei.attackedBy[Them][ROOK];
 
             if (b)
                 attackUnits += QueenContactCheck * popcount<Max15>(b);
@@ -401,7 +398,7 @@ namespace {
         {
             // ...and then remove squares not supported by another enemy piece
             b &= (  ei.attackedBy[Them][PAWN]   | ei.attackedBy[Them][KNIGHT]
-                  | ei.attackedBy[Them][BISHOP] | ei.attackedBy[Them][KING]);
+                  | ei.attackedBy[Them][BISHOP]);
 
             if (b)
                 attackUnits += RookContactCheck * popcount<Max15>(b);
@@ -539,12 +536,6 @@ namespace {
 
     if (b)
         score += popcount<Max15>(b) * PawnAttackThreat;
-
-    // Add a small bonus for tactical levers
-    b = ei.attackedBy[Us][PAWN] & pos.pieces(Them, PAWN);
-    b = (pos.pieces(Them) & ~pos.pieces(Them, PAWN)) & (shift_bb<Left>(b) | shift_bb<Right>(b));
-    if (b)
-        score += popcount<Max15>(b) * TacticalLever;
 
     if (Trace)
         Tracing::write(Tracing::THREAT, Us, score);
