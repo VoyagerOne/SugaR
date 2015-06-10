@@ -158,14 +158,13 @@ namespace {
   Score PawnSafePush             = S( 5,  5);
   Score TacticalLever            = S(10, 10);
 
+  TUNE(SetRange(0,20), PawnSafePush);
   TUNE(SetRange(0,30), TacticalLever);
 
   // Penalty for a bishop on a1/h1 (a8/h8 for black) which is trapped by
   // a friendly pawn on b2/g2 (b7/g7 for black). This can obviously only
   // happen in Chess960 games.
   const Score TrappedBishopA1H1 = S(50, 50);
-  
-  TUNE(PawnSafePush);
 
   #undef S
   #undef V
