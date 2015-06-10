@@ -155,8 +155,10 @@ namespace {
   const Score Unstoppable        = S( 0, 20);
   const Score Hanging            = S(31, 26);
   const Score PawnAttackThreat   = S(20, 20);
-        Score PawnSafePush       = S( 5,  5);
-        Score TacticalLever      = S( 3,  3);
+  Score PawnSafePush             = S( 5,  5);
+  Score TacticalLever            = S(10, 10);
+
+  TUNE(SetRange(0,30), TacticalLever);
 
   // Penalty for a bishop on a1/h1 (a8/h8 for black) which is trapped by
   // a friendly pawn on b2/g2 (b7/g7 for black). This can obviously only
@@ -164,7 +166,6 @@ namespace {
   const Score TrappedBishopA1H1 = S(50, 50);
   
   TUNE(PawnSafePush);
-  TUNE(TacticalLever);
 
   #undef S
   #undef V
