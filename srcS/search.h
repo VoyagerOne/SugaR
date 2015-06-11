@@ -42,6 +42,7 @@ struct Stack {
   Move ttMove;
   Move excludedMove;
   Move killers[2];
+  Move killer3;
   Depth reduction;
   Value staticEval;
   bool skipEarlyPruning;
