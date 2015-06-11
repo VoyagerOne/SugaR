@@ -156,7 +156,7 @@ namespace {
   const Score Hanging            = S(31, 26);
   const Score PawnAttackThreat   = S(20, 20);
   Score PawnSafePush             = S( 5,  5);
-  Score TacticalLever            = S(10, 10);
+  Score TacticalLever            = S(10, 8);
 
   TUNE(SetRange(0,20), PawnSafePush);
   TUNE(SetRange(0,30), TacticalLever);
