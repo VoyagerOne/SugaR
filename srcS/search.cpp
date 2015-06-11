@@ -581,7 +581,7 @@ namespace {
 
     ss->currentMove = ss->ttMove = (ss+1)->excludedMove = bestMove = MOVE_NONE;
     (ss+1)->skipEarlyPruning = false; (ss+1)->reduction = DEPTH_ZERO;
-    (ss+2)->killers[0] = (ss+2)->killers[1] = MOVE_NONE;
+	(ss + 2)->killers[0] = (ss + 2)->killers[1] = (ss + 2)->killer3= MOVE_NONE;
 
     // Step 4. Transposition table lookup
     // We don't want the score of a partial search to overwrite a previous full search
@@ -947,10 +947,11 @@ moves_loop: // When in check and at SpNode search starts from here
           &&  moveCount > 1
           && !captureOrPromotion
           &&  move != ss->killers[0]
-          &&  move != ss->killers[1])
+          &&  move != ss->killers[1]
+		  && move != ss->killer3
+		  )
       {
           ss->reduction = reduction<PvNode>(improving, depth, moveCount);
-
           if (   (!PvNode && cutNode)
               || (   History[pos.piece_on(to_sq(move))][to_sq(move)] < VALUE_ZERO
                   && CounterMovesHistory[pos.piece_on(prevMoveSq)][prevMoveSq]
@@ -1403,12 +1404,12 @@ moves_loop: // When in check and at SpNode search starts from here
 
     if (ss->killers[0] != move)
     {
-        ss->killers[1] = ss->killers[0];
+		ss->killer3 = ss->killers[1];
+		ss->killers[1] = ss->killers[0];
         ss->killers[0] = move;
     }
 
     Value bonus = Value((depth / ONE_PLY) * (depth / ONE_PLY));
-
     Square prevSq = to_sq((ss-1)->currentMove);
     HistoryStats& cmh = CounterMovesHistory[pos.piece_on(prevSq)][prevSq];
 
