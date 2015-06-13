@@ -22,6 +22,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "book.h"
 #include "evaluate.h"
 #include "misc.h"
 #include "movegen.h"
@@ -225,6 +226,8 @@ template uint64_t Search::perft<true>(Position& pos, Depth depth);
 
 void Search::think() {
 
+  static PolyglotBook book; // Defined static to initialize the PRNG only once
+
   Color us = RootPos.side_to_move();
   Time.init(Limits, us, RootPos.game_ply(), now());
 
@@ -254,6 +257,17 @@ void Search::think() {
   }
   else
   {
+      if (Options["OwnBook"] && !Limits.infinite && !Limits.mate)
+      {
+          Move bookMove = book.probe(RootPos, Options["Book File"], Options["Best Book Move"]);
+
+          if (bookMove && std::count(RootMoves.begin(), RootMoves.end(), bookMove))
+          {
+              std::swap(RootMoves[0], *std::find(RootMoves.begin(), RootMoves.end(), bookMove));
+              goto finalize;
+          }
+      }
+
       if (TB::Cardinality >=  RootPos.count<ALL_PIECES>(WHITE)
                             + RootPos.count<ALL_PIECES>(BLACK))
       {
@@ -304,6 +318,7 @@ void Search::think() {
   if (Limits.npmsec)
       Time.availableNodes += Limits.inc[us] - RootPos.nodes_searched();
 
+finalize:
   // When we reach the maximum depth, we can arrive here without a raise of
   // Signals.stop. However, if we are pondering or in an infinite search,
   // the UCI protocol states that we shouldn't print the best move before the
