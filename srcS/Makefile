@@ -151,11 +151,11 @@ endif
 ifeq ($(COMP),gcc)
 	comp=gcc
 	CXX=g++
-	CXXFLAGS += -pedantic -Wno-long-long -Wextra -Wshadow
+	CXXFLAGS += -pedantic -Wextra -Wshadow
 	ifneq ($(UNAME),Darwin)
 	   LDFLAGS += -Wl,--no-as-needed
-	else
-	   LDFLAGS += -Wl
+
+
 	endif
 endif
 
@@ -175,7 +175,7 @@ endif
 ifeq ($(COMP),clang)
 	comp=clang
 	CXX=clang++
-	CXXFLAGS += -pedantic -Wno-long-long -Wextra -Wshadow
+	CXXFLAGS += -pedantic -Wextra -Wshadow
 	ifeq ($(UNAME),Darwin)
 		CXXFLAGS += -std=c++0x -stdlib=libc++
 		DEPENDFLAGS += -std=c++0x -stdlib=libc++
@@ -292,7 +292,7 @@ ifeq ($(popcnt),yes)
 	ifeq ($(comp),icc)
 		CXXFLAGS += -msse3 -DUSE_POPCNT
 	else
-		CXXFLAGS += -msse3 -mpopcnt -DUSE_POPCNT 
+		CXXFLAGS += -msse3 -mpopcnt -DUSE_POPCNT
 	endif
 endif
 
