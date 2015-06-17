@@ -390,7 +390,7 @@ profile-build:
 	@touch *.cpp *.h syzygy/*.cpp syzygy/*.h
 	$(MAKE) ARCH=$(ARCH) COMP=$(COMP) $(profile_use)
 	@echo ""
-	@echo "Step 4/4. Deleting profile data ..."
+	@echo "Step 4/4. Deleting profile data ... SugaR is Ready!"
 	$(MAKE) ARCH=$(ARCH) COMP=$(COMP) $(profile_clean)
 
 strip:
@@ -412,7 +412,9 @@ default:
 ### ==========================================================================
 
 all: $(EXE) .depend
-
+	@echo "=========================================="
+	@echo "*   Compilation occurred Successfully!   *"
+	@echo "=========================================="
 config-sanity:
 	@echo ""
 	@echo "Config:"
