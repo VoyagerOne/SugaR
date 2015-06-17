@@ -19,3 +19,9 @@ Split MiddleGame and endgame scale factor for positive and negative
 Enpassantbonus Mg\Eg
 
 __________________________________
+TUNE(SetRange(0,20) PawnSafePush  
+(Bonus) 
+TUNE(SetRange(0,30) TacticalLever (Bonus)
+
+Add UCI option SearchLog
+default False
