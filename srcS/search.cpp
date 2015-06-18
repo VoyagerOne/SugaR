@@ -341,6 +341,7 @@ for (Thread* th : Threads)
 
         Threads.timer->run = false;
 
+
         if (Options["Write Search Log"])
         {
             int elapsed = Time.elapsed();
@@ -780,8 +781,7 @@ Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, boo
     if (   !PvNode
             &&  depth >= 2 * ONE_PLY
             &&  eval >= beta
-            &&  pos.non_pawn_material(pos.side_to_move())
-            && (depth < 10 * ONE_PLY || MoveList<LEGAL, KING>(pos).size()))
+            &&  pos.non_pawn_material(pos.side_to_move()))
     {
         ss->currentMove = MOVE_NULL;
 
@@ -1008,6 +1008,7 @@ moves_loop: // When in check and at SpNode search starts from here
                     splitPoint->spinlock.acquire();
 
 
+
                 continue;
             }
         }
@@ -1036,6 +1037,13 @@ moves_loop: // When in check and at SpNode search starts from here
                 &&  move != ss->killers[1])
         {
             ss->reduction = reduction<PvNode>(improving, depth, moveCount);
+
+
+
+
+
+
+
 
 
 
