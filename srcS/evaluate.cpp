@@ -123,7 +123,10 @@ namespace {
   };
 
   // Outpost[knight/bishop][supported by pawn]
-  const Score Outpost[2][2] = {{S(32,8), S(49,13)}, {S(14,4), S(22,6)}};
+  const Score Outpost[][2] = {
+    { S(28, 7), S(42,11) }, // Knights
+    { S(12, 3), S(18, 5) }  // Bishops
+  };
 
   // Threat[defended/weak][minor/major attacking][attacked PieceType] contains
   // bonuses according to which piece type attacks which one.
@@ -269,7 +272,6 @@ namespace {
         {
             // Bonus for outpost square
             if (   relative_rank(Us, s) >= RANK_4
-                && relative_rank(Us, s) <= RANK_6
                 && !(pos.pieces(Them, PAWN) & pawn_attack_span(Us, s)))
                 score += Outpost[Pt == BISHOP][!!(ei.attackedBy[Us][PAWN] & s)];
 
