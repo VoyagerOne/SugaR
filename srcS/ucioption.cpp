@@ -1,23 +1,21 @@
 /*
-# SugaR, a UCI chess playing engine derived from Stockfish
+  SugaR, a UCI chess playing engine derived from Stockfish
+  Copyright (C) 2008-2015 Marco Costalba, Joona Kiiski, Tord Romstad
 
-# Copyright (C) 2008-2015 Marco Costalba, Joona Kiiski, Tord Romstad
+  SugaR is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-# SugaR is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+  SugaR is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-#
-# SugaR is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include <algorithm>
 #include <cassert>
 #include <ostream>
@@ -33,53 +31,13 @@ using std::string;
 
 UCI::OptionsMap Options; // Global object
 
-Value PawnValueMg, PawnValueEg;
-Value KnightValueMg, KnightValueEg;
-Value BishopValueMg, BishopValueEg;
-Value RookValueMg, RookValueEg;
-Value QueenValueMg, QueenValueEg;
-Value MidgameLimit, EndgameLimit;
-
 namespace UCI {
-void on_eval(const Option&) {
-  PawnValueMg   = Value(int(Options["PawnValueMg"]));
-  PawnValueEg   = Value(int(Options["PawnValueEg"]));
-  KnightValueMg = Value(int(Options["KnightValueMg"]));
-  KnightValueEg = Value(int(Options["KnightValueEg"]));
-  BishopValueMg = Value(int(Options["BishopValueMg"]));
-  BishopValueEg = Value(int(Options["BishopValueEg"]));
-  RookValueMg   = Value(int(Options["RookValueMg"]));
-  RookValueEg   = Value(int(Options["RookValueEg"]));
-  QueenValueMg  = Value(int(Options["QueenValueMg"]));
-  QueenValueEg  = Value(int(Options["QueenValueEg"]));
-  MidgameLimit  = Value(int(Options["MidgameLimit"]));
-  EndgameLimit  = Value(int(Options["EndgameLimit"]));
-
-  PieceValue[MG][PAWN] = PawnValueMg;
-  PieceValue[EG][PAWN] = PawnValueEg;
-  PieceValue[MG][KNIGHT] = KnightValueMg;
-  PieceValue[EG][KNIGHT] = KnightValueEg;
-  PieceValue[MG][BISHOP] = BishopValueMg;
-  PieceValue[EG][BISHOP] = BishopValueEg;
-  PieceValue[MG][ROOK] = RookValueMg;
-  PieceValue[EG][ROOK] = RookValueEg;
-  PieceValue[MG][QUEEN] = QueenValueMg;
-  PieceValue[EG][QUEEN] = QueenValueEg;
-}
 
 /// 'On change' actions, triggered by an option's value change
 void on_clear_hash(const Option&) { Search::reset(); }
-
-
 void on_hash_size(const Option& o) { TT.resize(o); }
-
-
 void on_logger(const Option& o) { start_logger(o); }
-
-
 void on_threads(const Option&) { Threads.read_uci_options(); }
-
-
 void on_tb_path(const Option& o) { Tablebases::init(o); }
 
 
@@ -87,9 +45,7 @@ void on_tb_path(const Option& o) { Tablebases::init(o); }
 bool CaseInsensitiveLess::operator() (const string& s1, const string& s2) const {
 
   return std::lexicographical_compare(s1.begin(), s1.end(), s2.begin(), s2.end(),
-
          [](char c1, char c2) { return tolower(c1) < tolower(c2); });
-
 }
 
 
@@ -98,6 +54,8 @@ bool CaseInsensitiveLess::operator() (const string& s1, const string& s2) const 
 void init(OptionsMap& o) {
 
   const int MaxHashMB = Is64Bit ? 1024 * 1024 : 2048;
+
+
     o["Write Debug Log"]       << Option(false, on_logger);
     o["Book File"]             << Option("book.bin");
     o["Best Book Move"]        << Option(false);
@@ -120,23 +78,8 @@ void init(OptionsMap& o) {
     o["Syzygy50MoveRule"]      << Option(true);
     o["SyzygyProbeLimit"]      << Option(6, 0, 6);
     o["Write Search Log"]      << Option(false);
-    o["Search Log Filename"] << Option("SearchLog.txt");
+    o["Search Log Filename"]   << Option("SearchLog.txt");
 	
-  // SPSA
-  o["PawnValueMg"]           << Option(198, 0, 500, on_eval);
-  o["PawnValueEg"]           << Option(258, 0, 500, on_eval);
-  o["KnightValueMg"]         << Option(817, 0, 2000, on_eval);
-  o["KnightValueEg"]         << Option(846, 0, 2000, on_eval);
-  o["BishopValueMg"]         << Option(836, 0, 2000, on_eval);
-  o["BishopValueEg"]         << Option(857, 0, 2000, on_eval);
-  o["RookValueMg"]           << Option(1281, 0, 3000, on_eval);
-  o["RookValueEg"]           << Option(1293, 0, 3000, on_eval);
-  o["QueenValueMg"]          << Option(2521, 0, 5000, on_eval);
-  o["QueenValueEg"]          << Option(2558, 0, 5000, on_eval);
-  o["MidgameLimit"]          << Option(15581, 8000, 25000, on_eval);
-  o["EndgameLimit"]          << Option(3998, 0, 10000, on_eval);
-
-  on_eval(o["EndgameLimit"]);
 }
 /// operator<<() is used to print all the options default values in chronological
 /// insertion order (the idx field) and in the format defined by the UCI protocol.
