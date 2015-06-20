@@ -47,14 +47,14 @@ void CREATE_MEM(void** A,int align,uint64_t size)
 	num=shmget(IPC_PRIVATE,size,IPC_CREAT|SHM_R|SHM_W|SHM_HUGETLB);
 	if(num==-1)
 	{
-		printf("info string <LP> FAILED %llu Mb\n",size>>20);
+		printf("info string LargePages FAILED %llu Mb\n",size>>20);
 		MEMALIGN((*A),align,size);
 	}
 	else
 	{
 		(*A)=shmat(num,NULL,0x0);
 		large_use=TRUE;
-		printf("info string <LP> OK %llu Mb\n",size>>20);
+		printf("info string LargePages OK %llu Mb\n",size>>20);
 		std::cout<<"info string HUGELTB "<<(size>>20)<<std::endl;
 	}
 }
@@ -67,7 +67,7 @@ void CREATE_MEM2(void** A,uint64_t size)
 	{
 		(*A)=shmat(num,NULL,0x0);
 		large_use=TRUE;
-		printf("info string %llu Mb <LP>\n",size>>20);
+		printf("info string %llu Mb LargePages\n",size>>20);
 	}
 }
 
@@ -96,11 +96,11 @@ void CREATE_MEM(void** A,int align,uint64_t size)
 	if((*A))
 	{
 		large_use=TRUE;
-		printf("info string %llu Mb <LP>\n",size>>20);
+		printf("info string %llu Mb LargePages\n",size>>20);
 	}
 	else
 	{
-		printf("info string %llu Mb(no <LP>)\n",size>>20);
+		printf("info string %llu Mb(no LargePages)\n",size>>20);
 		MEMALIGN((*A),align,size);
 	}
 }
@@ -112,7 +112,7 @@ void CREATE_MEM2(void** A,uint64_t size)
 	if((*A))
 	{
 		large_use=TRUE;
-		printf("info string <LP> %llu Mb\n",size>>20);
+		printf("info string LargePages %llu Mb\n",size>>20);
 	}
 }
 
@@ -131,8 +131,10 @@ void FREE_MEM(void* A)
 
 void SETUP_PRIVILEGES()
 {
+
 	HANDLE TH,PROC;
 	TOKEN_PRIVILEGES tp;
+
 
 	PROC=GetCurrentProcess();
 	OpenProcessToken(PROC,TOKEN_ADJUST_PRIVILEGES|TOKEN_QUERY,&TH);
