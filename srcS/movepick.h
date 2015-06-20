@@ -32,7 +32,6 @@
 /// the class can store History and Countermoves. History records how often
 /// different moves have been successful or unsuccessful during the current search
 /// and is used for reduction and move ordering decisions. 
-
 /// Countermoves store the move that refute a previous one. Entries are stored
 /// using only the moving piece and destination square, hence two moves with
 /// different origin but same destination and piece will be considered identical.
@@ -41,15 +40,9 @@ struct Stats {
 
   static const Value Max = Value(250);
 
-    const T* operator[](Piece pc) const {
-        return table[pc];
-    }
-    T* operator[](Piece pc) {
-        return table[pc];
-    }
-    void clear() {
-        std::memset(table, 0, sizeof(table));
-    }
+  const T* operator[](Piece pc) const { return table[pc]; }
+  T* operator[](Piece pc) { return table[pc]; }
+  void clear() { std::memset(table, 0, sizeof(table)); }
 
   void update(Piece pc, Square to, Move m) {
 
@@ -81,38 +74,34 @@ typedef Stats<HistoryStats> CounterMovesHistoryStats;
 
 class MovePicker {
 public:
-    MovePicker(const MovePicker&) = delete;
-    MovePicker& operator=(const MovePicker&) = delete;
+  MovePicker(const MovePicker&) = delete;
+  MovePicker& operator=(const MovePicker&) = delete;
 
-    MovePicker(const Position&, Move, Depth, const HistoryStats&, const CounterMovesHistoryStats&, Square);
-    MovePicker(const Position&, Move, const HistoryStats&, const CounterMovesHistoryStats&, PieceType);
-    MovePicker(const Position&, Move, Depth, const HistoryStats&, const CounterMovesHistoryStats&, Move, Search::Stack*);
+  MovePicker(const Position&, Move, Depth, const HistoryStats&, const CounterMovesHistoryStats&, Square);
+  MovePicker(const Position&, Move, const HistoryStats&, const CounterMovesHistoryStats&, PieceType);
+  MovePicker(const Position&, Move, Depth, const HistoryStats&, const CounterMovesHistoryStats&, Move, Search::Stack*);
 
-    template<bool SpNode> Move next_move();
+  template<bool SpNode> Move next_move();
 
 private:
-    template<GenType> void score();
-    void generate_next_stage();
-    ExtMove* begin() {
-        return moves;
-    }
-    ExtMove* end() {
-        return endMoves;
-    }
+  template<GenType> void score();
+  void generate_next_stage();
+  ExtMove* begin() { return moves; }
+  ExtMove* end() { return endMoves; }
 
-    const Position& pos;
-    const HistoryStats& history;
-    const CounterMovesHistoryStats& counterMovesHistory;
-    Search::Stack* ss;
-    Move countermove;
-    Depth depth;
-    Move ttMove;
-    ExtMove killers[3];
-    Square recaptureSquare;
-    Value captureThreshold;
-    int stage;
-    ExtMove *endQuiets, *endBadCaptures;
-    ExtMove moves[MAX_MOVES], *cur = moves, *endMoves = moves;
+  const Position& pos;
+  const HistoryStats& history;
+  const CounterMovesHistoryStats& counterMovesHistory;
+  Search::Stack* ss;
+  Move countermove;
+  Depth depth;
+  Move ttMove;
+  ExtMove killers[3];
+  Square recaptureSquare;
+  Value captureThreshold;
+  int stage;
+  ExtMove *endQuiets, *endBadCaptures;
+  ExtMove moves[MAX_MOVES], *cur = moves, *endMoves = moves;
 };
 
 #endif // #ifndef MOVEPICK_H_INCLUDED
