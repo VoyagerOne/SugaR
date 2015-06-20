@@ -384,8 +384,8 @@ namespace {
         {
             // ...and then remove squares not supported by another enemy piece
             b &=  ei.attackedBy[Them][PAWN]   | ei.attackedBy[Them][KNIGHT]
-                | ei.attackedBy[Them][BISHOP] | ei.attackedBy[Them][ROOK] | 
-                  ei.attackedBy[Them][KING];
+                | ei.attackedBy[Them][BISHOP] | ei.attackedBy[Them][ROOK];
+
 
             if (b)
                 attackUnits += QueenContactCheck * popcount<Max15>(b);
@@ -402,7 +402,7 @@ namespace {
         {
             // ...and then remove squares not supported by another enemy piece
             b &= (  ei.attackedBy[Them][PAWN]   | ei.attackedBy[Them][KNIGHT]
-                  | ei.attackedBy[Them][BISHOP] | ei.attackedBy[Them][KING]);
+                  | ei.attackedBy[Them][BISHOP]);
 
             if (b)
                 attackUnits += RookContactCheck * popcount<Max15>(b);
