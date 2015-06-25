@@ -263,15 +263,7 @@ void Search::think() {
       if (Options["OwnBook"] && !Limits.infinite && !Limits.mate)
       {
           Move bookMove = book.probe(RootPos, Options["Book File"], Options["Best Book Move"]);
-
-
-
-
-
-
-
-
-
+		  
           if (bookMove && std::count(RootMoves.begin(), RootMoves.end(), bookMove))
           {
               std::swap(RootMoves[0], *std::find(RootMoves.begin(), RootMoves.end(), bookMove));
@@ -370,6 +362,7 @@ finalize:
         Signals.stopOnPonderhit = true;
         RootPos.this_thread()->wait_for(Signals.stop);
     }
+
 
     sync_cout << "bestmove " << UCI::move(RootMoves[0].pv[0], RootPos.is_chess960());
 
@@ -957,6 +950,7 @@ moves_loop: // When in check and at SpNode search starts from here
                 if (SpNode)
                     splitPoint->spinlock.acquire();
 
+
                 continue;
             }
 
@@ -986,20 +980,6 @@ moves_loop: // When in check and at SpNode search starts from here
             {
                 if (SpNode)
                     splitPoint->spinlock.acquire();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
                 continue;
             }
@@ -1042,58 +1022,51 @@ moves_loop: // When in check and at SpNode search starts from here
               ss->reduction = std::max(DEPTH_ZERO, ss->reduction - ONE_PLY);
 
           // Decrease reduction for moves that escape a capture
-            if (   ss->reduction
-                    && type_of(move) == NORMAL
-                    && type_of(pos.piece_on(to_sq(move))) != PAWN
-                    && pos.see(make_move(to_sq(move), from_sq(move))) < VALUE_ZERO)
-                ss->reduction = std::max(DEPTH_ZERO, ss->reduction - ONE_PLY);
+          if (   ss->reduction
+              && type_of(move) == NORMAL
+              && type_of(pos.piece_on(to_sq(move))) != PAWN
+              && pos.see(make_move(to_sq(move), from_sq(move))) < VALUE_ZERO)
+              ss->reduction = std::max(DEPTH_ZERO, ss->reduction - ONE_PLY);
 
-            Depth d = std::max(newDepth - ss->reduction, ONE_PLY);
-            if (SpNode)
-                alpha = splitPoint->alpha;
+          Depth d = std::max(newDepth - ss->reduction, ONE_PLY);
+          if (SpNode)
+              alpha = splitPoint->alpha;
 
-            value = -search<NonPV, false>(pos, ss+1, -(alpha+1), -alpha, d, true);
+          value = -search<NonPV, false>(pos, ss+1, -(alpha+1), -alpha, d, true);
 
-            // Re-search at intermediate depth if reduction is very high
-            if (value > alpha && ss->reduction >= 4 * ONE_PLY)
-            {
-                Depth d2 = std::max(newDepth - 2 * ONE_PLY, ONE_PLY);
-                value = -search<NonPV, false>(pos, ss+1, -(alpha+1), -alpha, d2, true);
-            }
+          doFullDepthSearch = (value > alpha && ss->reduction != DEPTH_ZERO);
+          ss->reduction = DEPTH_ZERO;
+      }
+      else
+          doFullDepthSearch = !PvNode || moveCount > 1;
 
-            doFullDepthSearch = (value > alpha && ss->reduction != DEPTH_ZERO);
-            ss->reduction = DEPTH_ZERO;
-        }
-        else
-            doFullDepthSearch = !PvNode || moveCount > 1;
+      // Step 16. Full depth search, when LMR is skipped or fails high
+      if (doFullDepthSearch)
+      {
+          if (SpNode)
+              alpha = splitPoint->alpha;
 
-        // Step 16. Full depth search, when LMR is skipped or fails high
-        if (doFullDepthSearch)
-        {
-            if (SpNode)
-                alpha = splitPoint->alpha;
+          value = newDepth <   ONE_PLY ?
+                            givesCheck ? -qsearch<NonPV,  true>(pos, ss+1, -(alpha+1), -alpha, DEPTH_ZERO)
+                                       : -qsearch<NonPV, false>(pos, ss+1, -(alpha+1), -alpha, DEPTH_ZERO)
+                                       : - search<NonPV, false>(pos, ss+1, -(alpha+1), -alpha, newDepth, !cutNode);
+      }
 
-            value = newDepth <   ONE_PLY ?
-                    givesCheck ? -qsearch<NonPV,  true>(pos, ss+1, -(alpha+1), -alpha, DEPTH_ZERO)
-                    : -qsearch<NonPV, false>(pos, ss+1, -(alpha+1), -alpha, DEPTH_ZERO)
-                        : - search<NonPV, false>(pos, ss+1, -(alpha+1), -alpha, newDepth, !cutNode);
-        }
+      // For PV nodes only, do a full PV search on the first move or after a fail
+      // high (in the latter case search only if value < beta), otherwise let the
+      // parent node fail low with value <= alpha and to try another move.
+      if (PvNode && (moveCount == 1 || (value > alpha && (RootNode || value < beta))))
+      {
+          (ss+1)->pv = pv;
+          (ss+1)->pv[0] = MOVE_NONE;
 
-	    // For PV nodes only, do a full PV search on the first move or after a fail
-        // high (in the latter case search only if value < beta), otherwise let the
-        // parent node fail low with value <= alpha and to try another move.
-        if (PvNode && (moveCount == 1 || (value > alpha && (RootNode || value < beta))))
-        {
-            (ss+1)->pv = pv;
-            (ss+1)->pv[0] = MOVE_NONE;
+          value = newDepth <   ONE_PLY ?
+                            givesCheck ? -qsearch<PV,  true>(pos, ss+1, -beta, -alpha, DEPTH_ZERO)
+                                       : -qsearch<PV, false>(pos, ss+1, -beta, -alpha, DEPTH_ZERO)
+                                       : - search<PV, false>(pos, ss+1, -beta, -alpha, newDepth, false);
+      }
 
-            value = newDepth <   ONE_PLY ?
-                    givesCheck ? -qsearch<PV,  true>(pos, ss+1, -beta, -alpha, DEPTH_ZERO)
-                    : -qsearch<PV, false>(pos, ss+1, -beta, -alpha, DEPTH_ZERO)
-                        : - search<PV, false>(pos, ss+1, -beta, -alpha, newDepth, false);
-        }
-
-        // Step 17. Undo move
+      // Step 17. Undo move
         pos.undo_move(move);
 
         assert(value > -VALUE_INFINITE && value < VALUE_INFINITE);
