@@ -55,7 +55,9 @@ void init(OptionsMap& o) {
 
   const int MaxHashMB = Is64Bit ? 1024 * 1024 : 2048;
 
-
+  
+    o["Write Search Log"]      << Option(false);
+    o["Search Log Filename"]   << Option("SearchLog.txt");
     o["Write Debug Log"]       << Option(false, on_logger);
     o["Book File"]             << Option("book.bin");
     o["Best Book Move"]        << Option(false);
@@ -77,8 +79,6 @@ void init(OptionsMap& o) {
     o["SyzygyProbeDepth"]      << Option(1, 1, 100);
     o["Syzygy50MoveRule"]      << Option(true);
     o["SyzygyProbeLimit"]      << Option(6, 0, 6);
-    o["Write Search Log"]      << Option(false);
-    o["Search Log Filename"]   << Option("SearchLog.txt");
 	
 }
 /// operator<<() is used to print all the options default values in chronological
@@ -174,77 +174,3 @@ Option& Option::operator=(const string& v) {
 }
 
 } // namespace UCI
-
-
-
-/// Tuning Framework. Fully separated from SF code, appended here to avoid
-/// adding a *.cpp file and to modify Makefile.
-
-#include <iostream>
-#include <sstream>
-
-string Tune::next(string& names, bool pop) {
-
-  string name;
-
-  do {
-      string token = names.substr(0, names.find(','));
-
-      if (pop)
-          names.erase(0, token.size() + 1);
-
-      std::stringstream ws(token);
-      name += (ws >> token, token); // Remove trailing whitespace
-
-  } while (  std::count(name.begin(), name.end(), '(')
-           - std::count(name.begin(), name.end(), ')'));
-
-  return name;
-}
-
-static void on_tune(const UCI::Option&) { Tune::read_options(); }
-
-static void make_option(const string& n, int v, const SetRange& r) {
-
-  // Do not generate option when there is nothing to tune (ie. min = max)
-  if (r(v).first == r(v).second)
-      return;
-
-  Options[n] << UCI::Option(v, r(v).first, r(v).second, on_tune);
-
-  // Print formatted parameters, ready to be copy-pasted in fishtest
-  std::cout << n << ","
-            << v << ","
-            << r(v).first << "," << r(v).second << ","
-            << (r(v).second - r(v).first) / 20.0 << ","
-            << "0.0020"
-            << std::endl;
-}
-
-template<> void Tune::Entry<int>::init_option() { make_option(name, value, range); }
-
-template<> void Tune::Entry<int>::read_option() {
-  if (Options.count(name))
-      value = Options[name];
-}
-
-template<> void Tune::Entry<Value>::init_option() { make_option(name, value, range); }
-
-template<> void Tune::Entry<Value>::read_option() {
-  if (Options.count(name))
-      value = Value(int(Options[name]));
-}
-
-template<> void Tune::Entry<Score>::init_option() {
-  make_option("m" + name, mg_value(value), range);
-  make_option("e" + name, eg_value(value), range);
-}
-
-template<> void Tune::Entry<Score>::read_option() {
-  if (Options.count("m" + name) || Options.count("e" + name))
-      value = make_score(Options["m" + name], Options["e" + name]);
-}
-
-// Instead of a variable here we have a PostUpdate function: just call it
-template<> void Tune::Entry<Tune::PostUpdate>::init_option() {}
-template<> void Tune::Entry<Tune::PostUpdate>::read_option() { value(); }

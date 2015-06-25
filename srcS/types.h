@@ -261,7 +261,6 @@ enum Rank {
 /// Score enum stores a middlegame and an endgame value in a single integer
 /// (enum). The least significant 16 bits are used to store the endgame value
 /// and the upper 16 bits are used to store the middlegame value.
-
 enum Score : int { SCORE_ZERO };
 
 inline Score make_score(int mg, int eg) {
@@ -273,17 +272,11 @@ inline Score make_score(int mg, int eg) {
 /// and so is a right shift of a signed integer.
 inline Value mg_value(Score s) {
 
-
-
-
   union { uint16_t u; int16_t s; } mg = { uint16_t(unsigned(s + 0x8000) >> 16) };
   return Value(mg.s);
 }
 
 inline Value eg_value(Score s) {
-
-
-
 
   union { uint16_t u; int16_t s; } eg = { uint16_t(unsigned(s)) };
   return Value(eg.s);
@@ -323,17 +316,9 @@ ENABLE_BASE_OPERATORS_ON(Score)
 
 /// Additional operators to add integers to a Value
 inline Value operator+(Value v, int i) { return Value(int(v) + i); }
-
-
 inline Value operator-(Value v, int i) { return Value(int(v) - i); }
-
-
 inline Value& operator+=(Value& v, int i) { return v = v + i; }
-
-
 inline Value& operator-=(Value& v, int i) { return v = v - i; }
-
-
 
 /// Only declared but not defined. We don't want to multiply two scores due to
 /// a very high risk of overflow. So user should explicitly convert to integer.
@@ -447,4 +432,3 @@ inline bool is_ok(Move m) {
 
 #endif // #ifndef TYPES_H_INCLUDED
 
-#include "tune.h" // Global visibility to tuning setup
