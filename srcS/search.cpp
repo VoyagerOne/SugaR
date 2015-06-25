@@ -38,21 +38,21 @@
 
 namespace Search {
 
-volatile SignalsType Signals;
-LimitsType Limits;
-RootMoveVector RootMoves;
-Position RootPos;
-StateStackPtr SetupStates;
+  volatile SignalsType Signals;
+  LimitsType Limits;
+  RootMoveVector RootMoves;
+  Position RootPos;
+  StateStackPtr SetupStates;
 }
 
 namespace Tablebases {
 
-int Cardinality;
-uint64_t Hits;
-bool RootInTB;
-bool UseRule50;
-Depth ProbeDepth;
-Value Score;
+  int Cardinality;
+  uint64_t Hits;
+  bool RootInTB;
+  bool UseRule50;
+  Depth ProbeDepth;
+  Value Score;
 }
 
 namespace TB = Tablebases;
@@ -63,137 +63,121 @@ using namespace Search;
 
 namespace {
 
-// Different node types, used as template parameter
-enum NodeType { Root, PV, NonPV };
+  // Different node types, used as template parameter
+  enum NodeType { Root, PV, NonPV };
 
-// Razoring and futility margin based on depth
-Value razor_margin(Depth d) {
-    return Value(512 + 32 * d);
-}
-Value futility_margin(Depth d) {
-    return Value(200 * d);
-}
+  // Razoring and futility margin based on depth
+  Value razor_margin(Depth d) { return Value(512 + 32 * d); }
+  Value futility_margin(Depth d) { return Value(200 * d); }
 
-// Futility and reductions lookup tables, initialized at startup
-int FutilityMoveCounts[2][16];  // [improving][depth]
-Depth Reductions[2][2][64][64]; // [pv][improving][depth][moveNumber]
+  // Futility and reductions lookup tables, initialized at startup
+  int FutilityMoveCounts[2][16];  // [improving][depth]
+  Depth Reductions[2][2][64][64]; // [pv][improving][depth][moveNumber]
 
-template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
+  template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
     return Reductions[PvNode][i][std::min(d, 63 * ONE_PLY)][std::min(mn, 63)];
-}
+  }
 
-// Skill struct is used to implement strength limiting
-struct Skill {
+  // Skill struct is used to implement strength limiting
+  struct Skill {
     Skill(int l) : level(l) {}
-    bool enabled() const {
-        return level < 20;
-    }
-    bool time_to_pick(Depth depth) const {
-        return depth / ONE_PLY == 1 + level;
-    }
-    Move best_move(size_t multiPV) {
-        return best ? best : pick_best(multiPV);
-    }
+    bool enabled() const { return level < 20; }
+    bool time_to_pick(Depth depth) const { return depth / ONE_PLY == 1 + level; }
+    Move best_move(size_t multiPV) { return best ? best : pick_best(multiPV); }
     Move pick_best(size_t multiPV);
 
     int level;
     Move best = MOVE_NONE;
-};
+  };
 
-// EasyMoveManager struct is used to detect a so called 'easy move'; when PV is
-// stable across multiple search iterations we can fast return the best move.
-struct EasyMoveManager {
+  // EasyMoveManager struct is used to detect a so called 'easy move'; when PV is
+  // stable across multiple search iterations we can fast return the best move.
+  struct EasyMoveManager {
 
     void clear() {
-        stableCnt = 0;
-        expectedPosKey = 0;
-        pv[0] = pv[1] = pv[2] = MOVE_NONE;
+      stableCnt = 0;
+      expectedPosKey = 0;
+      pv[0] = pv[1] = pv[2] = MOVE_NONE;
     }
 
     Move get(Key key) const {
-        return expectedPosKey == key ? pv[2] : MOVE_NONE;
+      return expectedPosKey == key ? pv[2] : MOVE_NONE;
     }
 
     void update(Position& pos, const std::vector<Move>& newPv) {
 
-        assert(newPv.size() >= 3);
+      assert(newPv.size() >= 3);
 
-        // Keep track of how many times in a row 3rd ply remains stable
-        stableCnt = (newPv[2] == pv[2]) ? stableCnt + 1 : 0;
+      // Keep track of how many times in a row 3rd ply remains stable
+      stableCnt = (newPv[2] == pv[2]) ? stableCnt + 1 : 0;
 
-        if (!std::equal(newPv.begin(), newPv.begin() + 3, pv))
-        {
-            std::copy(newPv.begin(), newPv.begin() + 3, pv);
+      if (!std::equal(newPv.begin(), newPv.begin() + 3, pv))
+      {
+          std::copy(newPv.begin(), newPv.begin() + 3, pv);
 
-            StateInfo st[2];
-            pos.do_move(newPv[0], st[0], pos.gives_check(newPv[0], CheckInfo(pos)));
-            pos.do_move(newPv[1], st[1], pos.gives_check(newPv[1], CheckInfo(pos)));
-            expectedPosKey = pos.key();
-            pos.undo_move(newPv[1]);
-            pos.undo_move(newPv[0]);
-        }
+          StateInfo st[2];
+          pos.do_move(newPv[0], st[0], pos.gives_check(newPv[0], CheckInfo(pos)));
+          pos.do_move(newPv[1], st[1], pos.gives_check(newPv[1], CheckInfo(pos)));
+          expectedPosKey = pos.key();
+          pos.undo_move(newPv[1]);
+          pos.undo_move(newPv[0]);
+      }
     }
 
     int stableCnt;
     Key expectedPosKey;
     Move pv[3];
-};
+  };
 
-size_t PVIdx;
-EasyMoveManager EasyMove;
-double BestMoveChanges;
-Value DrawValue[COLOR_NB];
-HistoryStats History;
-CounterMovesHistoryStats CounterMovesHistory;
-MovesStats Countermoves;
+  size_t PVIdx;
+  EasyMoveManager EasyMove;
+  double BestMoveChanges;
+  Value DrawValue[COLOR_NB];
+  HistoryStats History;
+  CounterMovesHistoryStats CounterMovesHistory;
+  MovesStats Countermoves;
 
-template <NodeType NT, bool SpNode>
-Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode);
+  template <NodeType NT, bool SpNode>
+  Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode);
 
-template <NodeType NT, bool InCheck>
-Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth);
+  template <NodeType NT, bool InCheck>
+  Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth);
 
-void id_loop(Position& pos);
-Value value_to_tt(Value v, int ply);
-Value value_from_tt(Value v, int ply);
-void update_pv(Move* pv, Move move, Move* childPv);
-void update_stats(const Position& pos, Stack* ss, Move move, Depth depth, Move* quiets, int quietsCnt);
+  void id_loop(Position& pos);
+  Value value_to_tt(Value v, int ply);
+  Value value_from_tt(Value v, int ply);
+  void update_pv(Move* pv, Move move, Move* childPv);
+  void update_stats(const Position& pos, Stack* ss, Move move, Depth depth, Move* quiets, int quietsCnt);
 
 } // namespace
-
-
-
-
-
-
 
 
 /// Search::init() is called during startup to initialize various lookup tables
 
 void Search::init() {
 
-    const double K[][2] = {{ 0.83, 2.25 }, { 0.50, 3.00 }};
+  const double K[][2] = {{ 0.83, 2.25 }, { 0.50, 3.00 }};
 
-    for (int pv = 0; pv <= 1; ++pv)
-        for (int imp = 0; imp <= 1; ++imp)
-            for (int d = 1; d < 64; ++d)
-                for (int mc = 1; mc < 64; ++mc)
-                {
-                    double r = K[pv][0] + log(d) * log(mc) / K[pv][1];
+  for (int pv = 0; pv <= 1; ++pv)
+      for (int imp = 0; imp <= 1; ++imp)
+          for (int d = 1; d < 64; ++d)
+              for (int mc = 1; mc < 64; ++mc)
+              {
+                  double r = K[pv][0] + log(d) * log(mc) / K[pv][1];
 
-                    if (r >= 1.5)
-                        Reductions[pv][imp][d][mc] = int(r) * ONE_PLY;
+                  if (r >= 1.5)
+                      Reductions[pv][imp][d][mc] = int(r) * ONE_PLY;
 
-                    // Increase reduction when eval is not improving
-                    if (!pv && !imp && Reductions[pv][imp][d][mc] >= 2 * ONE_PLY)
-                        Reductions[pv][imp][d][mc] += ONE_PLY;
-                }
+                  // Increase reduction when eval is not improving
+                  if (!pv && !imp && Reductions[pv][imp][d][mc] >= 2 * ONE_PLY)
+                      Reductions[pv][imp][d][mc] += ONE_PLY;
+              }
 
-    for (int d = 0; d < 16; ++d)
-    {
-        FutilityMoveCounts[0][d] = int(2.4 + 0.773 * pow(d + 0.00, 1.8));
-        FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));
-    }
+  for (int d = 0; d < 16; ++d)
+  {
+      FutilityMoveCounts[0][d] = int(2.4 + 0.773 * pow(d + 0.00, 1.8));
+      FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));
+  }
 }
 
 
@@ -201,10 +185,10 @@ void Search::init() {
 
 void Search::reset () {
 
-    TT.clear();
-    History.clear();
-    CounterMovesHistory.clear();
-    Countermoves.clear();
+  TT.clear();
+  History.clear();
+  CounterMovesHistory.clear();
+  Countermoves.clear();
 }
 
 
@@ -213,27 +197,26 @@ void Search::reset () {
 template<bool Root>
 uint64_t Search::perft(Position& pos, Depth depth) {
 
-    StateInfo st;
-    uint64_t cnt, nodes = 0;
-    CheckInfo ci(pos);
-    const bool leaf = (depth == 2 * ONE_PLY);
+  StateInfo st;
+  uint64_t cnt, nodes = 0;
+  CheckInfo ci(pos);
+  const bool leaf = (depth == 2 * ONE_PLY);
 
-
-for (const auto& m : MoveList<LEGAL>(pos))
-    {
-        if (Root && depth <= ONE_PLY)
-            cnt = 1, nodes++;
-        else
-        {
-            pos.do_move(m, st, pos.gives_check(m, ci));
-            cnt = leaf ? MoveList<LEGAL>(pos).size() : perft<false>(pos, depth - ONE_PLY);
-            nodes += cnt;
-            pos.undo_move(m);
-        }
-        if (Root)
-            sync_cout << UCI::move(m, pos.is_chess960()) << ": " << cnt << sync_endl;
-    }
-    return nodes;
+  for (const auto& m : MoveList<LEGAL>(pos))
+  {
+      if (Root && depth <= ONE_PLY)
+          cnt = 1, nodes++;
+      else
+      {
+          pos.do_move(m, st, pos.gives_check(m, ci));
+          cnt = leaf ? MoveList<LEGAL>(pos).size() : perft<false>(pos, depth - ONE_PLY);
+          nodes += cnt;
+          pos.undo_move(m);
+      }
+      if (Root)
+          sync_cout << UCI::move(m, pos.is_chess960()) << ": " << cnt << sync_endl;
+  }
+  return nodes;
 }
 
 template uint64_t Search::perft<true>(Position& pos, Depth depth);
@@ -280,6 +263,8 @@ void Search::think() {
       if (Options["OwnBook"] && !Limits.infinite && !Limits.mate)
       {
           Move bookMove = book.probe(RootPos, Options["Book File"], Options["Best Book Move"]);
+
+
 
 
 
@@ -1001,6 +986,17 @@ moves_loop: // When in check and at SpNode search starts from here
             {
                 if (SpNode)
                     splitPoint->spinlock.acquire();
+
+
+
+
+
+
+
+
+
+
+
 
 
 
