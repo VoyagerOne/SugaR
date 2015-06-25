@@ -285,6 +285,8 @@ void Search::think() {
 
 
 
+
+
           if (bookMove && std::count(RootMoves.begin(), RootMoves.end(), bookMove))
           {
               std::swap(RootMoves[0], *std::find(RootMoves.begin(), RootMoves.end(), bookMove));
@@ -1002,6 +1004,7 @@ moves_loop: // When in check and at SpNode search starts from here
 
 
 
+
                 continue;
             }
         }
@@ -1031,30 +1034,18 @@ moves_loop: // When in check and at SpNode search starts from here
         {
             ss->reduction = reduction<PvNode>(improving, depth, moveCount);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             if (   (!PvNode && cutNode)
                     || (   History[pos.piece_on(to_sq(move))][to_sq(move)] < VALUE_ZERO
                            && CounterMovesHistory[pos.piece_on(prevMoveSq)][prevMoveSq]
                            [pos.piece_on(to_sq(move))][to_sq(move)] <= VALUE_ZERO))
-                ss->reduction += ONE_PLY;
+              ss->reduction += ONE_PLY;
 
-            if (move == countermove)
-                ss->reduction = std::max(DEPTH_ZERO, ss->reduction - ONE_PLY);
+          if ((move == countermove) || (History[pos.piece_on(to_sq(move))][to_sq(move)] > VALUE_ZERO
+		        && CounterMovesHistory[pos.piece_on(prevMoveSq)][prevMoveSq]
+			       [pos.piece_on(to_sq(move))][to_sq(move)] > VALUE_ZERO))
+              ss->reduction = std::max(DEPTH_ZERO, ss->reduction - ONE_PLY);
 
-            // Decrease reduction for moves that escape a capture
+          // Decrease reduction for moves that escape a capture
             if (   ss->reduction
                     && type_of(move) == NORMAL
                     && type_of(pos.piece_on(to_sq(move))) != PAWN
@@ -1092,24 +1083,7 @@ moves_loop: // When in check and at SpNode search starts from here
                         : - search<NonPV, false>(pos, ss+1, -(alpha+1), -alpha, newDepth, !cutNode);
         }
 
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-        // For PV nodes only, do a full PV search on the first move or after a fail
+	    // For PV nodes only, do a full PV search on the first move or after a fail
         // high (in the latter case search only if value < beta), otherwise let the
         // parent node fail low with value <= alpha and to try another move.
         if (PvNode && (moveCount == 1 || (value > alpha && (RootNode || value < beta))))
