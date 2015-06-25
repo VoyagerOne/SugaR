@@ -162,6 +162,12 @@ void update_stats(const Position& pos, Stack* ss, Move move, Depth depth, Move* 
 } // namespace
 
 
+
+
+
+
+
+
 /// Search::init() is called during startup to initialize various lookup tables
 
 void Search::init() {
@@ -211,6 +217,7 @@ uint64_t Search::perft(Position& pos, Depth depth) {
     uint64_t cnt, nodes = 0;
     CheckInfo ci(pos);
     const bool leaf = (depth == 2 * ONE_PLY);
+
 
 for (const auto& m : MoveList<LEGAL>(pos))
     {
@@ -876,7 +883,6 @@ moves_loop: // When in check and at SpNode search starts from here
     while ((move = mp.next_move<SpNode>()) != MOVE_NONE)
     {
         assert(is_ok(move));
-
         if (move == excludedMove)
             continue;
 
@@ -1086,6 +1092,23 @@ moves_loop: // When in check and at SpNode search starts from here
                         : - search<NonPV, false>(pos, ss+1, -(alpha+1), -alpha, newDepth, !cutNode);
         }
 
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
         // For PV nodes only, do a full PV search on the first move or after a fail
         // high (in the latter case search only if value < beta), otherwise let the
         // parent node fail low with value <= alpha and to try another move.
