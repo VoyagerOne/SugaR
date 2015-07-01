@@ -1010,15 +1010,16 @@ moves_loop: // When in check and at SpNode search starts from here
         {
             ss->reduction = reduction<PvNode>(improving, depth, moveCount);
 
-            if (   (!PvNode && cutNode)
-                    || (   History[pos.piece_on(to_sq(move))][to_sq(move)] < VALUE_ZERO
-                           && CounterMovesHistory[pos.piece_on(prevMoveSq)][prevMoveSq]
-                           [pos.piece_on(to_sq(move))][to_sq(move)] <= VALUE_ZERO))
+          if (   (!PvNode && cutNode)
+              || (   History[pos.piece_on(to_sq(move))][to_sq(move)] < VALUE_ZERO
+                  && CounterMovesHistory[type_of(pos.piece_on(prevMoveSq))][prevMoveSq]
+                                        [pos.piece_on(to_sq(move))][to_sq(move)] <= VALUE_ZERO))
               ss->reduction += ONE_PLY;
 
-          if ((move == countermove) || (History[pos.piece_on(to_sq(move))][to_sq(move)] > VALUE_ZERO
-		        && CounterMovesHistory[pos.piece_on(prevMoveSq)][prevMoveSq]
-			       [pos.piece_on(to_sq(move))][to_sq(move)] > VALUE_ZERO))
+          if (    move == countermove
+              || (   History[pos.piece_on(to_sq(move))][to_sq(move)] > VALUE_ZERO
+                  && CounterMovesHistory[type_of(pos.piece_on(prevMoveSq))][prevMoveSq]
+                                        [pos.piece_on(to_sq(move))][to_sq(move)] > VALUE_ZERO))
               ss->reduction = std::max(DEPTH_ZERO, ss->reduction - ONE_PLY);
 
           // Decrease reduction for moves that escape a capture
@@ -1464,7 +1465,7 @@ void update_stats(const Position& pos, Stack* ss, Move move,
     Value bonus = Value((depth / ONE_PLY) * (depth / ONE_PLY));
 
     Square prevSq = to_sq((ss-1)->currentMove);
-    HistoryStats& cmh = CounterMovesHistory[pos.piece_on(prevSq)][prevSq];
+    HistoryStats& cmh = CounterMovesHistory[type_of(pos.piece_on(prevSq))][prevSq];
 
     History.update(pos.moved_piece(move), to_sq(move), bonus);
 
@@ -1484,10 +1485,10 @@ void update_stats(const Position& pos, Stack* ss, Move move,
     }
 
     // Extra penalty for TT move in previous ply when it gets refuted
-    if (is_ok((ss - 2)->currentMove) && (ss - 1)->currentMove == (ss - 1)->ttMove && !pos.captured_piece_type())
+    if (is_ok((ss-2)->currentMove) && (ss-1)->currentMove == (ss-1)->ttMove)
     {
         Square prevPrevSq = to_sq((ss-2)->currentMove);
-        HistoryStats& ttMoveCmh = CounterMovesHistory[pos.piece_on(prevPrevSq)][prevPrevSq];
+        HistoryStats& ttMoveCmh = CounterMovesHistory[type_of(pos.piece_on(prevPrevSq))][prevPrevSq];
         ttMoveCmh.update(pos.piece_on(prevSq), prevSq, -bonus - 2 * depth / ONE_PLY - 1);
     }
 }
