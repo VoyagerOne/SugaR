@@ -148,7 +148,6 @@ namespace {
 
   // Assorted bonuses and penalties used by evaluation
   const Score KingOnOne          = S( 2, 58);
-  const Score KingOnMany         = S( 6,125);
   const Score RookOnPawn         = S( 7, 27);
   const Score RookOnOpenFile     = S(43, 21);
   const Score RookOnSemiOpenFile = S(19, 10);
@@ -515,7 +514,7 @@ namespace {
 
         b = weak & ei.attackedBy[Us][KING];
         if (b)
-            score += more_than_one(b) ? KingOnMany : KingOnOne;
+            score += KingOnOne * popcount<Max15>(b);
     }
 
     // Add a small bonus for safe pawn pushes
